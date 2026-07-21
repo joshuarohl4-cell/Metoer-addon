@@ -18,6 +18,9 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
+        // === BEDROCK SCANNING (Key Feature!) ===
+        Modules.get().add(new BedrockScan());         // Scan below bedrock - sends probe packets
+        
         // === BASE FINDING (Donut SMP / GrimAC Servers) ===
         Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock - WORKS!
         Modules.get().add(new SpawnerESP());         // Highlight spawners with green ESP
