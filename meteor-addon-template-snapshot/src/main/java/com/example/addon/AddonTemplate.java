@@ -18,9 +18,10 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
-        // === BASE FINDING (Donut SMP) ===
-        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock - WORKS on anti-xray servers!
-        Modules.get().add(new SpawnerESP());          // Highlight spawners - WORKS when visible
+        // === BASE FINDING (Donut SMP / GrimAC Servers) ===
+        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock - WORKS!
+        Modules.get().add(new SpawnerESP());         // Highlight spawners with green ESP
+        Modules.get().add(new BlockNotifier());       // Find and highlight specific blocks
         
         // === UTILITY ===
         Modules.get().add(new Homemeta());
