@@ -18,18 +18,22 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
-        // Base Finding Modules (Donut SMP)
-        Modules.get().add(new BedrockVoidESP());
-        Modules.get().add(new ChunkFinder());
-        Modules.get().add(new SpawnerChunks());
-        
-        // Utility Modules
+        // === BASE FINDING MODULES (Donut SMP) ===
+        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock layers
+        Modules.get().add(new ChunkFinder());         // Find suspicious chunks
+        Modules.get().add(new SpawnerFinder());        // Find spawners by type (zombie, skeleton, etc.)
+        Modules.get().add(new SpawnerChunks());        // Highlight chunks with spawners
+
+        // === COMBAT MODULES ===
+        Modules.get().add(new VelocityPlus());         // Anti-cheat velocity bypass
+
+        // === UTILITY MODULES ===
         Modules.get().add(new Homemeta());
         Modules.get().add(new ResetHome());
         Modules.get().add(new RenderDistanceToggle());
-        
-        // Mining Module
-        Modules.get().add(new FastMineV1());
+
+        // === MINING MODULES ===
+        Modules.get().add(new FastMineV1());           // Fast mine with mixin
     }
 
     @Override

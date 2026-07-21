@@ -1,12 +1,8 @@
 package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
-import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.systems.modules.Modules;
-import meteordevelopment.meteorclient.systems.modules.world.Timer;
-import meteordevelopment.orbit.EventHandler;
 
 public class FastMineV1 extends Module {
     public static FastMineV1 INSTANCE;
@@ -19,7 +15,6 @@ public class FastMineV1 extends Module {
         .name("speed")
         .description("Mining speed - lower = safer from detection")
         .defaultValue(SpeedPreset.Haste3)
-        .onChanged(preset -> applySpeedPreset(preset))
         .build()
     );
 
@@ -35,55 +30,6 @@ public class FastMineV1 extends Module {
         .build()
     );
 
-    // Anti-cheat bypass settings
-    public final Setting<Boolean> antiCheatMode = sgBypass.add(new BoolSetting.Builder()
-        .name("anti-cheat-mode")
-        .description("Enables detection bypass techniques")
-        .defaultValue(true)
-        .build()
-    );
-
-    public final Setting<Integer> variance = sgBypass.add(new IntSetting.Builder()
-        .name("random-variance")
-        .description("Adds random variance to speed (0-50%) to look more natural")
-        .defaultValue(25)
-        .min(0)
-        .max(50)
-        .sliderRange(0, 50)
-        .visible(antiCheatMode::get)
-        .build()
-    );
-
-    public final Setting<Boolean> burstMode = sgBypass.add(new BoolSetting.Builder()
-        .name("burst-mode")
-        .description("Mine in bursts with pauses to avoid constant fast mining")
-        .defaultValue(true)
-        .visible(antiCheatMode::get)
-        .build()
-    );
-
-    public final Setting<Integer> burstTicks = sgBypass.add(new IntSetting.Builder()
-        .name("burst-ticks")
-        .description("How many ticks to mine fast in each burst")
-        .defaultValue(8)
-        .min(1)
-        .max(50)
-        .sliderRange(1, 50)
-        .visible(() -> burstMode.get() && antiCheatMode.get())
-        .build()
-    );
-
-    public final Setting<Integer> pauseTicks = sgBypass.add(new IntSetting.Builder()
-        .name("pause-ticks")
-        .description("How many ticks to pause between bursts")
-        .defaultValue(15)
-        .min(1)
-        .max(100)
-        .sliderRange(1, 100)
-        .visible(() -> burstMode.get() && antiCheatMode.get())
-        .build()
-    );
-
     // Server specific presets (SAFE VALUES)
     public final Setting<ServerPreset> serverPreset = sgGeneral.add(new EnumSetting.Builder<ServerPreset>()
         .name("server")
@@ -94,13 +40,7 @@ public class FastMineV1 extends Module {
     );
 
     // Internal state
-    private float effectiveSpeed = 2.0f;
-    private float currentSpeed = 1.0f;
-    private int burstTimer = 0;
-    private int pauseTimer = 0;
-    private boolean isPaused = false;
-    private Timer meteorTimer = null;
-    private boolean timerEnabled = false;
+    private float effectiveSpeed = 3.0f;
 
     public FastMineV1() {
         super(AddonTemplate.CATEGORY, "fast-mine-v1", "Mine blocks faster with anti-cheat bypass techniques.");
@@ -110,33 +50,16 @@ public class FastMineV1 extends Module {
     @Override
     public void onActivate() {
         if (INSTANCE != this) INSTANCE = this;
-        applySpeedPreset(speedPreset.get());
-        applyServerPreset(serverPreset.get());
-        meteorTimer = Modules.get().get(Timer.class);
-        resetState();
+        applySpeedPreset();
     }
 
     @Override
     public void onDeactivate() {
         if (INSTANCE == this) INSTANCE = null;
-        if (meteorTimer != null) {
-            try {
-                meteorTimer.setOverride(1.0);
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
     }
 
-    private void resetState() {
-        burstTimer = 0;
-        pauseTimer = 0;
-        isPaused = false;
-        currentSpeed = 1.0f;
-    }
-
-    private void applySpeedPreset(SpeedPreset preset) {
-        switch (preset) {
+    private void applySpeedPreset() {
+        switch (speedPreset.get()) {
             case Haste1:
                 effectiveSpeed = 1.5f;
                 break;
@@ -162,105 +85,27 @@ public class FastMineV1 extends Module {
         switch (preset) {
             case DonutSMP:
                 speedPreset.set(SpeedPreset.Haste2);
-                antiCheatMode.set(true);
-                variance.set(30);
-                burstMode.set(true);
-                burstTicks.set(10);
-                pauseTicks.set(20);
-                applySpeedPreset(SpeedPreset.Haste2);
+                applySpeedPreset();
                 break;
             case EuropeSMP:
                 speedPreset.set(SpeedPreset.Haste2);
-                antiCheatMode.set(true);
-                variance.set(30);
-                burstMode.set(true);
-                burstTicks.set(10);
-                pauseTicks.set(20);
-                applySpeedPreset(SpeedPreset.Haste2);
+                applySpeedPreset();
                 break;
             case Hypixel:
                 speedPreset.set(SpeedPreset.Haste1);
-                antiCheatMode.set(true);
-                variance.set(40);
-                burstMode.set(true);
-                burstTicks.set(5);
-                pauseTicks.set(25);
-                applySpeedPreset(SpeedPreset.Haste1);
+                applySpeedPreset();
                 break;
             case Vanilla:
                 speedPreset.set(SpeedPreset.Haste5);
-                antiCheatMode.set(false);
-                applySpeedPreset(SpeedPreset.Haste5);
+                applySpeedPreset();
                 break;
             case Any:
                 break;
         }
     }
 
-    @EventHandler
-    private void onTick(TickEvent.Pre event) {
-        if (meteorTimer == null) {
-            meteorTimer = Modules.get().get(Timer.class);
-        }
-
-        if (meteorTimer == null) return;
-
-        if (!antiCheatMode.get()) {
-            // No anti-cheat bypass, use constant speed
-            currentSpeed = effectiveSpeed;
-            timerEnabled = true;
-        } else if (!burstMode.get()) {
-            // Just apply variance without bursting
-            float varianceAmount = (float) (Math.random() * variance.get() / 100.0);
-            currentSpeed = effectiveSpeed * (1.0f + varianceAmount);
-            timerEnabled = true;
-        } else {
-            // Burst mode - alternate between fast mining and normal
-            if (!isPaused) {
-                burstTimer++;
-                // Apply speed with variance
-                float varianceAmount = (float) (Math.random() * variance.get() / 100.0);
-                currentSpeed = effectiveSpeed * (1.0f + varianceAmount);
-                timerEnabled = true;
-
-                if (burstTimer >= burstTicks.get()) {
-                    isPaused = true;
-                    pauseTimer = 0;
-                    currentSpeed = 1.0f;
-                    timerEnabled = false;
-                }
-            } else {
-                pauseTimer++;
-                currentSpeed = 1.0f;
-                timerEnabled = false;
-
-                if (pauseTimer >= pauseTicks.get()) {
-                    isPaused = false;
-                    burstTimer = 0;
-                    currentSpeed = effectiveSpeed;
-                    timerEnabled = true;
-                }
-            }
-        }
-
-        // Apply timer multiplier
-        try {
-            if (timerEnabled && currentSpeed > 1.0f) {
-                meteorTimer.setOverride(currentSpeed);
-            } else {
-                meteorTimer.setOverride(1.0);
-            }
-        } catch (Exception e) {
-            // Ignore
-        }
-    }
-
     public float getEffectiveSpeed() {
-        return currentSpeed;
-    }
-
-    public boolean isMiningFast() {
-        return timerEnabled && currentSpeed > 1.0f;
+        return effectiveSpeed;
     }
 
     public enum SpeedPreset {
