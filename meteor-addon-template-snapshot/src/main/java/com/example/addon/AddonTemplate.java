@@ -1,15 +1,9 @@
 package com.example.addon;
 
-import com.example.addon.modules.FastMineV1;
-import com.example.addon.modules.Homemeta;
-import com.example.addon.modules.RenderDistanceToggle;
-import com.example.addon.modules.ResetHome;
-import com.example.addon.modules.SpawnerChunks;
+import com.example.addon.modules.*;
 import com.mojang.logging.LogUtils;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
-import meteordevelopment.meteorclient.commands.Commands;
-import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
@@ -24,12 +18,18 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
-        // Modules
-        Modules.get().add(new FastMineV1());
+        // Base Finding Modules (Donut SMP)
+        Modules.get().add(new BedrockVoidESP());
+        Modules.get().add(new ChunkFinder());
+        Modules.get().add(new SpawnerChunks());
+        
+        // Utility Modules
         Modules.get().add(new Homemeta());
         Modules.get().add(new ResetHome());
         Modules.get().add(new RenderDistanceToggle());
-        Modules.get().add(new SpawnerChunks());
+        
+        // Mining Module
+        Modules.get().add(new FastMineV1());
     }
 
     @Override
