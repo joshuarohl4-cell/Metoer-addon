@@ -33,13 +33,13 @@ public class FastMineMixin {
         float speedMultiplier = module.getEffectiveSpeed();
         
         // Cap to reasonable values
-        speedMultiplier = Math.min(speedMultiplier, 5.0f);
+        speedMultiplier = Math.min(speedMultiplier, 12.0f);
         
         // Calculate new speed
         float newSpeed = baseSpeed * speedMultiplier;
         
         // Clamp to prevent overflow
-        newSpeed = Math.min(newSpeed, 50.0f);
+        newSpeed = Math.min(newSpeed, 100.0f);
         
         cir.setReturnValue(newSpeed);
     }
