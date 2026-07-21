@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PlayerEntity.class)
 public class FastMineMixin {
 
-    @Inject(method = "getBlockBreakingSpeed", at = @At("RETURN"), cancellable = true, remap = false)
+    @Inject(method = "getBlockBreakingSpeed", at = @At("RETURN"), cancellable = true)
     private void onGetBlockBreakingSpeed(BlockState block, CallbackInfoReturnable<Float> cir) {
         FastMineV1 module = FastMineV1.INSTANCE;
         if (module == null || !module.isActive()) return;

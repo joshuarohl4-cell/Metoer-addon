@@ -2,12 +2,18 @@
   "mappings": {
     "com/example/addon/mixin/ExampleMixin": {
       "<init>": "Lnet/minecraft/class_310;<init>(Lnet/minecraft/class_542;)V"
+    },
+    "com/example/addon/mixin/FastMineMixin": {
+      "getBlockBreakingSpeed": "Lnet/minecraft/class_1657;method_7351(Lnet/minecraft/class_2680;)F"
     }
   },
   "data": {
     "named:intermediary": {
       "com/example/addon/mixin/ExampleMixin": {
         "<init>": "Lnet/minecraft/class_310;<init>(Lnet/minecraft/class_542;)V"
+      },
+      "com/example/addon/mixin/FastMineMixin": {
+        "getBlockBreakingSpeed": "Lnet/minecraft/class_1657;method_7351(Lnet/minecraft/class_2680;)F"
       }
     }
   }
