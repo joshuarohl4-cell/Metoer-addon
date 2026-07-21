@@ -9,29 +9,38 @@ public class FastMineV1 extends Module {
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
-    // Simple preset selection
-    public final Setting<FastMinePreset> preset = sgGeneral.add(new EnumSetting.Builder<FastMinePreset>()
-        .name("preset")
-        .description("Mining speed preset - choose based on server")
-        .defaultValue(FastMinePreset.Haste10)
-        .onChanged(preset -> applyPreset(preset))
+    // Speed presets
+    public final Setting<SpeedPreset> speedPreset = sgGeneral.add(new EnumSetting.Builder<SpeedPreset>()
+        .name("speed")
+        .description("Mining speed preset")
+        .defaultValue(SpeedPreset.Haste10)
+        .onChanged(preset -> applySpeedPreset(preset))
         .build()
     );
 
-    // Custom speed if preset is Custom
-    public final Setting<Double> speed = sgGeneral.add(new DoubleSetting.Builder()
-        .name("speed")
-        .description("Mining speed (1.0 = normal, 10.0 = Haste 10)")
+    // Custom speed slider
+    public final Setting<Double> customSpeed = sgGeneral.add(new DoubleSetting.Builder()
+        .name("custom-speed")
+        .description("Custom mining speed (1.0 = normal)")
         .defaultValue(5.0)
         .min(1.0)
-        .max(10.0)
-        .sliderRange(1.0, 10.0)
-        .visible(() -> preset.get() == FastMinePreset.Custom)
+        .max(20.0)
+        .sliderRange(1.0, 20.0)
+        .visible(() -> speedPreset.get() == SpeedPreset.Custom)
+        .build()
+    );
+
+    // Server specific presets
+    public final Setting<ServerPreset> serverPreset = sgGeneral.add(new EnumSetting.Builder<ServerPreset>()
+        .name("server")
+        .description("Auto-configure for specific server type")
+        .defaultValue(ServerPreset.Any)
+        .onChanged(preset -> applyServerPreset(preset))
         .build()
     );
 
     // Internal state
-    private float effectiveSpeed = 5.0f;
+    private float effectiveSpeed = 10.0f;
 
     public FastMineV1() {
         super(AddonTemplate.CATEGORY, "fast-mine-v1", "Mine blocks faster with anti-cheat bypass.");
@@ -41,7 +50,8 @@ public class FastMineV1 extends Module {
     @Override
     public void onActivate() {
         if (INSTANCE != this) INSTANCE = this;
-        applyPreset(preset.get());
+        applySpeedPreset(speedPreset.get());
+        applyServerPreset(serverPreset.get());
     }
 
     @Override
@@ -49,58 +59,87 @@ public class FastMineV1 extends Module {
         if (INSTANCE == this) INSTANCE = null;
     }
 
-    private void applyPreset(FastMinePreset preset) {
+    private void applySpeedPreset(SpeedPreset preset) {
         switch (preset) {
-            case Haste10:
-                // Haste 10 level - super fast
+            case Haste2:
+                effectiveSpeed = 2.0f;
+                break;
+            case Haste5:
                 effectiveSpeed = 5.0f;
                 break;
-            case Instant:
-                // Near instant mine
-                effectiveSpeed = 8.0f;
-                break;
-            case GodMode:
-                // Max speed
+            case Haste10:
                 effectiveSpeed = 10.0f;
                 break;
-            case Aggressive:
-                effectiveSpeed = 4.0f;
+            case Haste15:
+                effectiveSpeed = 15.0f;
                 break;
-            case Normal:
-                effectiveSpeed = 3.0f;
-                break;
-            case AntiCheat:
-                // Bypasses most anti-cheats
-                effectiveSpeed = 3.5f;
+            case Instant:
+                effectiveSpeed = 20.0f;
                 break;
             case Custom:
-                effectiveSpeed = speed.get().floatValue();
+                effectiveSpeed = customSpeed.get().floatValue();
+                break;
+        }
+    }
+
+    private void applyServerPreset(ServerPreset preset) {
+        switch (preset) {
+            case DonutSMP:
+                speedPreset.set(SpeedPreset.Haste10);
+                applySpeedPreset(SpeedPreset.Haste10);
+                break;
+            case EuropeSMP:
+                speedPreset.set(SpeedPreset.Haste10);
+                applySpeedPreset(SpeedPreset.Haste10);
+                break;
+            case Hypixel:
+                speedPreset.set(SpeedPreset.Haste2);
+                applySpeedPreset(SpeedPreset.Haste2);
+                break;
+            case Vanilla:
+                speedPreset.set(SpeedPreset.Instant);
+                applySpeedPreset(SpeedPreset.Instant);
+                break;
+            case Any:
+                // Keep current settings
                 break;
         }
     }
 
     public float getEffectiveSpeed() {
-        // Apply slight random variance to avoid detection
-        if (preset.get() != FastMinePreset.Custom) {
-            float variance = (float) (Math.random() * 0.08 - 0.04); // ±4%
-            return effectiveSpeed * (1.0f + variance);
-        }
-        return effectiveSpeed;
+        // Apply random variance to avoid detection
+        float variance = (float) (Math.random() * 0.04 - 0.02); // ±2%
+        return effectiveSpeed * (1.0f + variance);
     }
 
-    public enum FastMinePreset {
-        Haste10("Haste 10", "Super fast - like Haste 10 potion"),
-        Instant("Instant", "Near instant block breaking"),
-        GodMode("God Mode", "Maximum possible speed"),
-        Aggressive("Aggressive", "Very fast 4x speed"),
-        Normal("Normal", "Fast 3x speed"),
-        AntiCheat("Anti-Cheat", "Balanced speed for servers with anti-cheat"),
-        Custom("Custom", "Set your own speed (1-10)");
+    public enum SpeedPreset {
+        Haste2("Haste 2", "Light 2x speed boost"),
+        Haste5("Haste 5", "Medium 5x speed boost"),
+        Haste10("Haste 10", "Strong 10x speed boost"),
+        Haste15("Haste 15", "Very strong 15x speed boost"),
+        Instant("Instant", "Near instant 20x speed"),
+        Custom("Custom", "Set your own speed");
 
         private final String name;
         private final String description;
 
-        FastMinePreset(String name, String description) {
+        SpeedPreset(String name, String description) {
+            this.name = name;
+            this.description = description;
+        }
+    }
+
+    public enum ServerPreset {
+        Any("Any Server", "Use default settings"),
+        DonutSMP("Donut SMP", "Optimized for Donut SMP"),
+        EuropeSMP("Europe SMP", "Optimized for Europe SMP"),
+        Hypixel("Hypixel", "Optimized for Hypixel"),
+        Vanilla("Vanilla", "Maximum speed for vanilla/offline servers");
+
+        private final String name;
+        private final String description;
+
+        ServerPreset(String name, String description) {
             this.name = name;
             this.description = description;
         }
