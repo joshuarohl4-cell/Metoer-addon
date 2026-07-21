@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SpawnerESP extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgRender = settings.createGroup("Render");
-    private final SettingGroup sgNotifications = settings.createGroup("Notifications");
 
     private final Setting<SettingColor> spawnerColor = sgRender.add(new ColorSetting.Builder()
         .name("spawner-color")
@@ -62,25 +61,11 @@ public class SpawnerESP extends Module {
         .build()
     );
 
-    private final Setting<Boolean> notifications = sgNotifications.add(new BoolSetting.Builder()
-        .name("notifications")
-        .description("Show chat notifications when spawners are found")
-        .defaultValue(true)
-        .build()
-    );
-
-    private final Setting<Boolean> playSound = sgNotifications.add(new BoolSetting.Builder()
-        .name("play-sound")
-        .description("Play sound when spawner is found")
-        .defaultValue(true)
-        .build()
-    );
-
     private final Set<BlockPos> foundSpawners = ConcurrentHashMap.newKeySet();
     private int totalFound = 0;
 
     public SpawnerESP() {
-        super(AddonTemplate.CATEGORY, "spawner-esp", "Detects and highlights spawners with green ESP boxes.");
+        super(AddonTemplate.CATEGORY, "spawner-esp", "Highlights spawners with green ESP boxes. Note: Only works when spawners are visible (not behind walls on anti-xray servers).");
     }
 
     @Override
@@ -88,7 +73,6 @@ public class SpawnerESP extends Module {
         foundSpawners.clear();
         totalFound = 0;
 
-        // Scan all loaded chunks
         for (net.minecraft.world.chunk.Chunk chunk : Utils.chunks()) {
             if (chunk instanceof WorldChunk worldChunk) {
                 scanChunk(worldChunk);
@@ -114,19 +98,9 @@ public class SpawnerESP extends Module {
         for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
             if (blockEntity instanceof MobSpawnerBlockEntity) {
                 BlockPos pos = blockEntity.getPos();
-
                 if (!foundSpawners.contains(pos)) {
                     foundSpawners.add(pos);
                     totalFound++;
-
-                    if (notifications.get()) {
-                        info("Spawner found at " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
-                    }
-
-                    if (playSound.get() && mc.player != null) {
-                        mc.getSoundManager().play(net.minecraft.client.sound.PositionedSoundInstance.master(
-                            net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f));
-                    }
                 }
             }
         }
@@ -144,17 +118,14 @@ public class SpawnerESP extends Module {
         int renderDist = mc.options.getViewDistance().getValue() * 16;
 
         for (BlockPos pos : foundSpawners) {
-            // Distance check
             double dx = camera.x - pos.getX() - 0.5;
             double dz = camera.z - pos.getZ() - 0.5;
             double dist = Math.sqrt(dx * dx + dz * dz);
 
             if (dist > renderDist) continue;
 
-            // Draw ESP box
             event.renderer.box(pos, sideColor, outlineColor, shapeMode.get(), 0);
 
-            // Draw tracer
             if (tracers.get()) {
                 Vec3d center = Vec3d.ofCenter(pos);
                 event.renderer.line(camera.x, camera.y, camera.z, center.x, center.y, center.z, tracerColorValue);

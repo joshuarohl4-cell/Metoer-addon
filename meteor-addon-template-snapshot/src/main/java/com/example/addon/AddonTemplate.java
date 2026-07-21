@@ -18,25 +18,17 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
-        // === ESP MODULES (Base Finding) ===
-        Modules.get().add(new SpawnerESP());          // Green ESP boxes on spawners
-        Modules.get().add(new ChestESP());            // ESP for chests, barrels, shulkers
-        Modules.get().add(new RedstoneESP());         // ESP for redstone components
-        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock
-        Modules.get().add(new SusChunk());            // Detect suspicious chunks
+        // === BASE FINDING (Donut SMP) ===
+        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock - WORKS on anti-xray servers!
+        Modules.get().add(new SpawnerESP());          // Highlight spawners - WORKS when visible
         
-        // === LEGACY MODULES ===
-        Modules.get().add(new ChunkFinder());         // Chunk scanning
-        Modules.get().add(new SpawnerChunks());       // Chunk spawner highlight
-        Modules.get().add(new SpawnerFinder());       // Spawner finder
-
-        // === UTILITY MODULES ===
+        // === UTILITY ===
         Modules.get().add(new Homemeta());
         Modules.get().add(new ResetHome());
         Modules.get().add(new RenderDistanceToggle());
 
-        // === MINING MODULES ===
-        Modules.get().add(new FastMineV1());          // Fast mine with mixin
+        // === MINING ===
+        Modules.get().add(new FastMineV1());          // Fast mine
     }
 
     @Override
