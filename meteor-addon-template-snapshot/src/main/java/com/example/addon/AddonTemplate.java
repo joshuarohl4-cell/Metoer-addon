@@ -18,14 +18,17 @@ public class AddonTemplate extends MeteorAddon {
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
 
-        // === BASE FINDING MODULES (Donut SMP) ===
-        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock layers
-        Modules.get().add(new ChunkFinder());         // Find suspicious chunks
-        Modules.get().add(new SpawnerFinder());        // Find spawners by type (zombie, skeleton, etc.)
-        Modules.get().add(new SpawnerChunks());        // Highlight chunks with spawners
-
-        // === COMBAT MODULES ===
-        Modules.get().add(new VelocityPlus());         // Anti-cheat velocity bypass
+        // === ESP MODULES (Base Finding) ===
+        Modules.get().add(new SpawnerESP());          // Green ESP boxes on spawners
+        Modules.get().add(new ChestESP());            // ESP for chests, barrels, shulkers
+        Modules.get().add(new RedstoneESP());         // ESP for redstone components
+        Modules.get().add(new BedrockVoidESP());     // Find voids in bedrock
+        Modules.get().add(new SusChunk());            // Detect suspicious chunks
+        
+        // === LEGACY MODULES ===
+        Modules.get().add(new ChunkFinder());         // Chunk scanning
+        Modules.get().add(new SpawnerChunks());       // Chunk spawner highlight
+        Modules.get().add(new SpawnerFinder());       // Spawner finder
 
         // === UTILITY MODULES ===
         Modules.get().add(new Homemeta());
@@ -33,7 +36,7 @@ public class AddonTemplate extends MeteorAddon {
         Modules.get().add(new RenderDistanceToggle());
 
         // === MINING MODULES ===
-        Modules.get().add(new FastMineV1());           // Fast mine with mixin
+        Modules.get().add(new FastMineV1());          // Fast mine with mixin
     }
 
     @Override
